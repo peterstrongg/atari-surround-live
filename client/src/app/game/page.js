@@ -4,6 +4,14 @@ import { useEffect, useRef, useState } from "react"
 
 import Image from 'next/image'
 import BoardCell from "../../assets/board_cell.png"
+import Player1 from "../../assets/player_1.png"
+
+const player = <Image
+    key="player1"
+    src={Player1}
+    alt="board cell"
+    width={15}
+/>
 
 const generateBoard = () => {
     let board = []
@@ -27,8 +35,8 @@ const generateBoard = () => {
 const game = () => {
     const [board, setBoard] = useState([])
     const [serverMessage, setServerMessage] = useState("NO CONNECTION")
-    const [webSocket, setWebSocket] = useState(null)
     const [userInput, setUserInput] = useState("")
+    const [gameState, setGameState] = useState("")
     const webSocketRef = useRef(null)
 
     const handleKeydown = (event) => {
@@ -58,13 +66,32 @@ const game = () => {
         }
     }
 
+    const progressGame = (event) => {
+        setServerMessage(event.data)
+    }
+
+    const spawnPlayer = (xPos, yPos) => {
+        const newBoard = board.map((c, i) => {
+            if (i === yPos) {
+                c[xPos] = player
+                return c
+            } else {
+                return c
+            }
+        })
+        setBoard(newBoard)
+    }
+
+    const startGameHandler = (event) => {
+        spawnPlayer(0, 1)
+    }
+
     const endGame = () => {
         webSocket.close()
     }
 
     useEffect(() => {
         const ws = new WebSocket(process.env.WS_SERVER_URL + "/ws/play")
-        setWebSocket(ws)
         webSocketRef.current = ws
         ws.onopen = (event) => {
             ws.send(JSON.stringify({
@@ -72,7 +99,7 @@ const game = () => {
             }))
         }
         ws.onmessage = (event) => {
-            setServerMessage(event.data)
+            progressGame(event)
         }
         ws.onclose = (event) => {
             setServerMessage("NO CONNECTION")
@@ -92,6 +119,8 @@ const game = () => {
             <h1>Game</h1>
             <h1>{serverMessage}</h1>
             <h1>Input: {userInput}</h1>
+            <h1>Gamestate: {gameState}</h1>
+            <button onClick={startGameHandler}>Spawn Player</button>
            
             {board.map((row, key) => <div key={key} className="flex flex-row">{row}</div>)}
             
