@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -18,6 +19,15 @@ var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
 		return true
 	},
+}
+
+type clientMessage struct {
+	UserInput string `json:"userInput"`
+}
+
+type serverMessage struct {
+	PlayerAInput string `json:"playerAInput"`
+	PlayerBInput string `json:"playerBInput"`
 }
 
 func main() {
@@ -52,9 +62,22 @@ func playGame(w http.ResponseWriter, r *http.Request) {
 	go getPlayerInput(playerA, &inputA)
 	go getPlayerInput(playerB, &inputB)
 
+	var responseA clientMessage
+	var responseB clientMessage
 	for {
-		playerA.WriteMessage(websocket.TextMessage, []byte(inputA+" "+inputB))
-		playerB.WriteMessage(websocket.TextMessage, []byte(inputA+" "+inputB))
+		if inputA != "" && inputB != "" {
+			json.Unmarshal([]byte(inputA), &responseA)
+			json.Unmarshal([]byte(inputB), &responseB)
+
+			var m serverMessage
+			m.PlayerAInput = responseA.UserInput
+			m.PlayerBInput = responseB.UserInput
+
+			message, _ := json.Marshal(m)
+
+			playerA.WriteMessage(websocket.TextMessage, []byte(string(message)))
+			playerB.WriteMessage(websocket.TextMessage, []byte(string(message)))
+		}
 		time.Sleep(100 * time.Millisecond)
 	}
 }
