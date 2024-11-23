@@ -16,43 +16,47 @@ const game = () => {
 
     const handleKeydown = (event) => {
         if(event.key.toUpperCase() === "W" || event.key === "ArrowUp") {
-            // webSocketRef.current.send(JSON.stringify({
-            //     "userInput" : "UP"
-            // }))
+            webSocketRef.current.send(JSON.stringify({
+                "userInput" : "UP"
+            }))
             setUserInput("UP")
             userInputRef.current = "UP"
         }
         if(event.key.toUpperCase() === "A" || event.key === "ArrowLeft") {
-            // webSocketRef.current.send(JSON.stringify({
-            //     "userInput" : "LEFT"
-            // }))
+            webSocketRef.current.send(JSON.stringify({
+                "userInput" : "LEFT"
+            }))
             setUserInput("LEFT")
             userInputRef.current = "LEFT"
         }
         if(event.key.toUpperCase() === "S" || event.key === "ArrowDown") {
-            // webSocketRef.current.send(JSON.stringify({
-            //     "userInput" : "DOWN"
-            // }))
+            webSocketRef.current.send(JSON.stringify({
+                "userInput" : "DOWN"
+            }))
             setUserInput("DOWN")
             userInputRef.current = "DOWN"
         }
         if(event.key.toUpperCase() === "D" || event.key === "ArrowRight") {
-            // webSocketRef.current.send(JSON.stringify({
-            //     "userInput" : "RIGHT"
-            // }))
+            webSocketRef.current.send(JSON.stringify({
+                "userInput" : "RIGHT"
+            }))
             setUserInput("RIGHT")
             userInputRef.current = "RIGHT"
         }
     }
 
-    const  startGame = async () => {
+    const startGame = async (event) => {
         setBoard(updateBoard(pA, pB)) // Spawn Players
-        // TODO: Read player inputs from server
-        while(true) {
-            pA = movePlayer(pA, userInputRef.current)
-            setBoard(updateBoard(pA, pB))
-            await new Promise(r => setTimeout(r, 100))
-        }
+        console.log(event.data["playerAInput"])
+        pA = movePlayer(pA, JSON.parse(event.data)["playerAInput"])
+        pB = movePlayer(pB, JSON.parse(event.data)["playerBInput"])
+       
+        // NOTE: Uncomment below to test without ws server
+        // while(true) {
+        //     pA = movePlayer(pA, userInputRef.current)
+        //     setBoard(updateBoard(pA, pB))
+        //     await new Promise(r => setTimeout(r, 100))
+        // }
     }
 
     const endGame = () => {
@@ -64,11 +68,12 @@ const game = () => {
         webSocketRef.current = ws
         ws.onopen = (event) => {
             ws.send(JSON.stringify({
-                "connection" : "true"
+                "userInput" : userInputRef.current
             }))
         }
         ws.onmessage = (event) => {
             setServerMessage(event.data)
+            startGame(event)
         }
         ws.onclose = (event) => {
             setServerMessage("NO CONNECTION")
