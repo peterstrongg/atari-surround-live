@@ -1,93 +1,62 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react"
-
-import Image from 'next/image'
-import BoardCell from "../../assets/board_cell.png"
-import Player1 from "../../assets/player_1.png"
-
-const player = <Image
-    key="player1"
-    src={Player1}
-    alt="board cell"
-    width={15}
-/>
-
-const generateBoard = () => {
-    let board = []
-    let key = 0
-    for(let i = 0; i < process.env.BOARD_HEIGHT; i++) {
-        let row = []
-        for(let j = 0; j < process.env.BOARD_WIDTH; j++) {
-            row.push(<Image
-                key={key}
-                src={BoardCell}
-                alt="board cell"
-                width={15}
-            />)
-            key++
-        }
-        board.push(row)
-    }
-    return board
-}
+import { Player, playerASprite, playerBSprite, drawBoard, updateBoard, movePlayer } from "./game.js"
 
 const game = () => {
-    const [board, setBoard] = useState([])
+    let pA = new Player(0, 0, playerASprite)
+    let pB = new Player(2, 3, playerBSprite)
     const [serverMessage, setServerMessage] = useState("NO CONNECTION")
     const [userInput, setUserInput] = useState("")
-    const [gameState, setGameState] = useState("")
+    const [board, setBoard] = useState([])
+    
     const webSocketRef = useRef(null)
+    const userInputRef = useRef("")
+    const boardRef = useRef([])
 
     const handleKeydown = (event) => {
         if(event.key.toUpperCase() === "W" || event.key === "ArrowUp") {
-            webSocketRef.current.send(JSON.stringify({
-                "userInput" : "UP"
-            }))
+            // webSocketRef.current.send(JSON.stringify({
+            //     "userInput" : "UP"
+            // }))
             setUserInput("UP")
+            userInputRef.current = "UP"
         }
         if(event.key.toUpperCase() === "A" || event.key === "ArrowLeft") {
-            webSocketRef.current.send(JSON.stringify({
-                "userInput" : "LEFT"
-            }))
+            // webSocketRef.current.send(JSON.stringify({
+            //     "userInput" : "LEFT"
+            // }))
             setUserInput("LEFT")
+            userInputRef.current = "LEFT"
         }
         if(event.key.toUpperCase() === "S" || event.key === "ArrowDown") {
-            webSocketRef.current.send(JSON.stringify({
-                "userInput" : "DOWN"
-            }))
+            // webSocketRef.current.send(JSON.stringify({
+            //     "userInput" : "DOWN"
+            // }))
             setUserInput("DOWN")
+            userInputRef.current = "DOWN"
         }
         if(event.key.toUpperCase() === "D" || event.key === "ArrowRight") {
-            webSocketRef.current.send(JSON.stringify({
-                "userInput" : "RIGHT"
-            }))
+            // webSocketRef.current.send(JSON.stringify({
+            //     "userInput" : "RIGHT"
+            // }))
             setUserInput("RIGHT")
+            userInputRef.current = "RIGHT"
         }
     }
 
-    const progressGame = (event) => {
-        setServerMessage(event.data)
-    }
-
-    const spawnPlayer = (xPos, yPos) => {
-        const newBoard = board.map((c, i) => {
-            if (i === yPos) {
-                c[xPos] = player
-                return c
-            } else {
-                return c
-            }
-        })
-        setBoard(newBoard)
-    }
-
-    const startGameHandler = (event) => {
-        spawnPlayer(0, 1)
+    const  startGame = async () => {
+        setBoard(updateBoard(pA, pB)) // Spawn Players
+        // TODO: Read player inputs from server
+        while(true) {
+            pA = movePlayer(pA, userInputRef.current)
+            setBoard(updateBoard(pA, pB))
+            await new Promise(r => setTimeout(r, 100))
+        }
     }
 
     const endGame = () => {
-        webSocket.close()
+        webSocketRef.current.close()
     }
 
     useEffect(() => {
@@ -99,16 +68,13 @@ const game = () => {
             }))
         }
         ws.onmessage = (event) => {
-            progressGame(event)
+            setServerMessage(event.data)
         }
         ws.onclose = (event) => {
             setServerMessage("NO CONNECTION")
         }
-        
         document.addEventListener("keydown", handleKeydown)
-
-        setBoard(generateBoard())
-
+        setBoard(drawBoard())
         return (() => {
             removeEventListener("keydown", handleKeydown)
         })
@@ -119,12 +85,12 @@ const game = () => {
             <h1>Game</h1>
             <h1>{serverMessage}</h1>
             <h1>Input: {userInput}</h1>
-            <h1>Gamestate: {gameState}</h1>
-            <button onClick={startGameHandler}>Spawn Player</button>
-           
-            {board.map((row, key) => <div key={key} className="flex flex-row">{row}</div>)}
-            
-            <button onClick={endGame}>End Game</button>
+            <button onClick={startGame}>Start Game</button>
+            {board.map((d, i) => (
+                <div className="flex" key={i} ref={(ref) => (boardRef.current[i] = ref)}>
+                    {d}
+                </div>
+            ))}
         </div>
     )
 }
