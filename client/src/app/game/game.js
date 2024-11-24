@@ -3,13 +3,13 @@ const playerBSprite = <div key="playerB" className="flex bg-red-500 w-[2rem] h-[
 const playerTrailSprite = <div key="trailSprite" className="flex bg-blue-500 w-[2rem] h-[2rem]"></div>
 
 class TrailNode {
-    lastX
-    lastY
     sprite = playerTrailSprite
 
-    constructor(prevX, prevY) {
-        this.xPos = prevX
-        this.yPos = prevY
+    constructor(xPos, yPos) {
+        this.xPos = xPos
+        this.yPos = yPos
+        this.lastX = xPos
+        this.lastY = yPos
     }
 
     getXPos() {
@@ -17,6 +17,12 @@ class TrailNode {
     }
     getYPos() {
         return this.yPos
+    }
+    getLastX() {
+        return this.lastX
+    }
+    getLastY() {
+        return this.lastY
     }
 
     setXPos(x) {
@@ -30,18 +36,13 @@ class TrailNode {
 }
 
 class Player {
-    trailLength = 25
-    lastX
-    lastY
-
+    trailLength = 1
     constructor(xPos, yPos, sprite) {
         this.xPos = xPos
         this.yPos = yPos
         this.lastX = xPos
         this.lastY = yPos
-
         this.sprite = sprite
-        
         this.trail = this.createTrail()
     }
 
@@ -53,14 +54,22 @@ class Player {
         return t
     }
 
+    extendTail() {
+        this.trail.push(new TrailNode(
+            this.trail[this.trail.length - 1].getXPos(), 
+            this.trail[this.trail.length - 1].getYPos()
+        ))
+        this.trailLength++
+    }
+
     updateTrail() {
         for(let i = 0; i < this.trailLength; i++) {
             if(i === 0) {
-                this.trail[i].setXPos(this.lastX)
-                this.trail[i].setYPos(this.lastY)
+                this.trail[i].setXPos(this.getLastX())
+                this.trail[i].setYPos(this.getLastY())
             } else {
-                this.trail[i].setXPos(this.trail[i-1].lastX)
-                this.trail[i].setYPos(this.trail[i-1].lastY)
+                this.trail[i].setXPos(this.trail[i-1].getLastX())
+                this.trail[i].setYPos(this.trail[i-1].getLastY())
             }
         }
     }
@@ -70,6 +79,12 @@ class Player {
     }
     getYPos() {
         return this.yPos
+    }
+    getLastX() {
+        return this.lastX
+    }
+    getLastY() {
+        return this.lastY
     }
     getTrailLength() {
         return this.trailLength
@@ -114,12 +129,12 @@ const updateBoard = (pA, pB) => {
 
     // Draw trails
     pA.updateTrail()
-    for(let i = 0; i < pA.trail.length; i++) {
+    for(let i = 0; i < pA.trailLength; i++) {
         board[pA.trail[i].getYPos()][pA.trail[i].getXPos()] = <div key={i} className="flex bg-blue-300 w-[2rem] h-[2rem]"></div>
     }
 
     pB.updateTrail()
-    for(let i = 0; i < pB.trail.length; i++) {
+    for(let i = 0; i < pB.trailLength; i++) {
         board[pB.trail[i].getYPos()][pB.trail[i].getXPos()] = <div key={-i-1} className="flex bg-blue-300 w-[2rem] h-[2rem]"></div>
     }
 
@@ -127,20 +142,52 @@ const updateBoard = (pA, pB) => {
     board[pA.getYPos()][pA.getXPos()] = pA.sprite
     board[pB.getYPos()][pB.getXPos()] = pB.sprite
 
+    // Collision Detection
+    for(let i = 0; i < pA.trailLength; i++) {
+        if(pA.getXPos() === pA.trail[i].getXPos()           // Player A hits themself
+            && pA.getYPos() === pA.trail[i].getYPos() 
+            && pA.trailLength > 1) {
+            gameOver()
+        } else if(pA.getXPos() === pB.trail[i].getXPos()    // Player A hits Player B's taile
+            && pA.getYPos() === pB.trail[i].getYPos() 
+            && pA.trailLength > 1) {
+            gameOver()
+        } else if(pB.getXPos() === pB.trail[i].getXPos()    // Player B hits themself
+            && pB.getYPos() === pB.trail[i].getYPos() 
+            && pB.trailLength > 1) {
+            gameOver()
+        } else if(pB.getXPos() === pA.trail[i].getXPos()    // Player B hits Player A's trail
+            && pB.getYPos() === pA.trail[i].getYPos() 
+            && pB.trailLength > 1) {
+            gameOver()
+        }
+    }
+
+    pA.extendTail() // Commenting out this line changes trail behavior
+    pB.extendTail() // Commenting out this line changes trail behavior
+
     return board
 }
 
 const movePlayer = (player, direction) => {
-    if (direction === "UP" && player.getYPos() > 0) {
-        player.moveUp()
-    } else if (direction === "DOWN" && player.getYPos() < process.env.BOARD_HEIGHT - 1) {
-        player.moveDown()
-    } else if (direction === "LEFT" && player.getXPos() > 0) {
-        player.moveLeft()
-    } else if (direction === "RIGHT" && player.getXPos() < process.env.BOARD_WIDTH - 1) {
-        player.moveRight()
+    if (direction) {
+        if (direction === "UP" && player.getYPos() > 0) {
+            player.moveUp()
+        } else if (direction === "DOWN" && player.getYPos() < process.env.BOARD_HEIGHT - 1) {
+            player.moveDown()
+        } else if (direction === "LEFT" && player.getXPos() > 0) {
+            player.moveLeft()
+        } else if (direction === "RIGHT" && player.getXPos() < process.env.BOARD_WIDTH - 1) {
+            player.moveRight()
+        } else {
+            gameOver()
+        }
     }
     return player
+}
+
+const gameOver = () => {
+    alert("Game Over")
 }
 
 export { 

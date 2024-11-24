@@ -11,7 +11,7 @@ const game = () => {
     const [board, setBoard] = useState([])
     
     const webSocketRef = useRef(null)
-    const userInputRef = useRef("")
+    const userInputRef = useRef("DOWN") // Player moves down by default
     const boardRef = useRef([])
 
     const handleKeydown = (event) => {
