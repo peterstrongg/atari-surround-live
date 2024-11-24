@@ -47,9 +47,9 @@ const game = () => {
 
     const startGame = async (event) => {
         setBoard(updateBoard(pA, pB)) // Spawn Players
-        console.log(event.data["playerAInput"])
-        pA = movePlayer(pA, JSON.parse(event.data)["playerAInput"])
-        pB = movePlayer(pB, JSON.parse(event.data)["playerBInput"])
+        const serverMessage = JSON.parse(event.data)
+        pA = movePlayer(pA, serverMessage["playerAInput"])
+        pB = movePlayer(pB, serverMessage["playerBInput"])
        
         // NOTE: Uncomment below to test without ws server
         // while(true) {

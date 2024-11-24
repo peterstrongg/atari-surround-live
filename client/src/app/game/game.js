@@ -1,11 +1,15 @@
 const playerASprite = <div key="playerA" className="flex bg-green-500 w-[2rem] h-[2rem]"></div>
 const playerBSprite = <div key="playerB" className="flex bg-red-500 w-[2rem] h-[2rem]"></div>
+const playerTrailSprite = <div key="trailSprite" className="flex bg-blue-500 w-[2rem] h-[2rem]"></div>
 
-class Player {
-    constructor(xPos, yPos, sprite) {
-        this.xPos = xPos
-        this.yPos = yPos
-        this.sprite = sprite
+class TrailNode {
+    lastX
+    lastY
+    sprite = playerTrailSprite
+
+    constructor(prevX, prevY) {
+        this.xPos = prevX
+        this.yPos = prevY
     }
 
     getXPos() {
@@ -15,16 +19,80 @@ class Player {
         return this.yPos
     }
 
+    setXPos(x) {
+        this.lastX = this.xPos
+        this.xPos = x
+    }
+    setYPos(y) {
+        this.lastY = this.yPos
+        this.yPos = y
+    }
+}
+
+class Player {
+    trailLength = 25
+    lastX
+    lastY
+
+    constructor(xPos, yPos, sprite) {
+        this.xPos = xPos
+        this.yPos = yPos
+        this.lastX = xPos
+        this.lastY = yPos
+
+        this.sprite = sprite
+        
+        this.trail = this.createTrail()
+    }
+
+    createTrail() {
+        const t = []
+        for(let i = 0; i < this.trailLength; i++) {
+            t.push(new TrailNode(this.getXPos(), this.getYPos()))
+        }
+        return t
+    }
+
+    updateTrail() {
+        for(let i = 0; i < this.trailLength; i++) {
+            if(i === 0) {
+                this.trail[i].setXPos(this.lastX)
+                this.trail[i].setYPos(this.lastY)
+            } else {
+                this.trail[i].setXPos(this.trail[i-1].lastX)
+                this.trail[i].setYPos(this.trail[i-1].lastY)
+            }
+        }
+    }
+
+    getXPos() {
+        return this.xPos
+    }
+    getYPos() {
+        return this.yPos
+    }
+    getTrailLength() {
+        return this.trailLength
+    }
+
     moveUp() {
+        this.lastX = this.xPos
+        this.lastY = this.yPos
         this.yPos = this.yPos - 1
     }
     moveDown() {
+        this.lastX = this.xPos
+        this.lastY = this.yPos
         this.yPos = this.yPos + 1
     }
     moveLeft() {
+        this.lastY = this.yPos
+        this.lastX = this.xPos
         this.xPos = this.xPos - 1
     }
     moveRight() {
+        this.lastY = this.yPos
+        this.lastX = this.xPos
         this.xPos = this.xPos + 1
     }
 }
@@ -43,8 +111,22 @@ const drawBoard = () => {
 
 const updateBoard = (pA, pB) => {
     let board = drawBoard()
+
+    // Draw trails
+    pA.updateTrail()
+    for(let i = 0; i < pA.trail.length; i++) {
+        board[pA.trail[i].getYPos()][pA.trail[i].getXPos()] = <div key={i} className="flex bg-blue-300 w-[2rem] h-[2rem]"></div>
+    }
+
+    pB.updateTrail()
+    for(let i = 0; i < pB.trail.length; i++) {
+        board[pB.trail[i].getYPos()][pB.trail[i].getXPos()] = <div key={-i-1} className="flex bg-blue-300 w-[2rem] h-[2rem]"></div>
+    }
+
+    // Update player locations
     board[pA.getYPos()][pA.getXPos()] = pA.sprite
     board[pB.getYPos()][pB.getXPos()] = pB.sprite
+
     return board
 }
 
