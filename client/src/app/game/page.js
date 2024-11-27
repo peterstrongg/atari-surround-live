@@ -2,13 +2,14 @@
 
 import { useEffect, useRef, useState } from "react"
 import { Player, playerASprite, playerBSprite, drawBoard, updateBoard, movePlayer } from "./game.js"
+import GameOver from "./components/gameover.js"
 
 const game = () => {
-    let pA = new Player(0, 0, playerASprite)
-    let pB = new Player(2, 3, playerBSprite)
-    const [serverMessage, setServerMessage] = useState("NO CONNECTION")
-    const [userInput, setUserInput] = useState("")
+    let pA = new Player(7, 11, playerASprite)
+    let pB = new Player(17, 11, playerBSprite)
+
     const [board, setBoard] = useState([])
+    const [gameOver, setGameOver] = useState(false)
     
     const webSocketRef = useRef(null)
     const userInputRef = useRef("DOWN") // Player moves down by default
@@ -19,48 +20,51 @@ const game = () => {
             webSocketRef.current.send(JSON.stringify({
                 "userInput" : "UP"
             }))
-            setUserInput("UP")
             userInputRef.current = "UP"
         }
         if(event.key.toUpperCase() === "A" || event.key === "ArrowLeft") {
             webSocketRef.current.send(JSON.stringify({
                 "userInput" : "LEFT"
             }))
-            setUserInput("LEFT")
             userInputRef.current = "LEFT"
         }
         if(event.key.toUpperCase() === "S" || event.key === "ArrowDown") {
             webSocketRef.current.send(JSON.stringify({
                 "userInput" : "DOWN"
             }))
-            setUserInput("DOWN")
             userInputRef.current = "DOWN"
         }
         if(event.key.toUpperCase() === "D" || event.key === "ArrowRight") {
             webSocketRef.current.send(JSON.stringify({
                 "userInput" : "RIGHT"
             }))
-            setUserInput("RIGHT")
             userInputRef.current = "RIGHT"
         }
     }
 
     const startGame = async (event) => {
-        setBoard(updateBoard(pA, pB)) // Spawn Players
-        const serverMessage = JSON.parse(event.data)
-        pA = movePlayer(pA, serverMessage["playerAInput"])
-        pB = movePlayer(pB, serverMessage["playerBInput"])
-       
-        // NOTE: Uncomment below to test without ws server
-        // while(true) {
-        //     pA = movePlayer(pA, userInputRef.current)
-        //     setBoard(updateBoard(pA, pB))
-        //     await new Promise(r => setTimeout(r, 100))
-        // }
+        if(!pA.getCollided() && !pB.getCollided()) {
+            const serverMessage = JSON.parse(event.data)
+            
+            pA = movePlayer(pA, serverMessage["playerAInput"])
+            pB = movePlayer(pB, serverMessage["playerBInput"])
+            setBoard(updateBoard(pA, pB))
+            
+        } else {
+            setGameOver(true)
+            restartGame()
+        }
     }
 
-    const endGame = () => {
-        webSocketRef.current.close()
+    const restartGame = async () => {
+        await new Promise(r => setTimeout(r, 1000))
+        setGameOver(false)
+        pA = new Player(7, 11, playerASprite)
+        pB = new Player(17, 11, playerBSprite)
+        webSocketRef.current.send(JSON.stringify({
+            "userInput" : "DOWN"
+        }))
+        
     }
 
     useEffect(() => {
@@ -72,11 +76,10 @@ const game = () => {
             }))
         }
         ws.onmessage = (event) => {
-            setServerMessage(event.data)
             startGame(event)
         }
         ws.onclose = (event) => {
-            setServerMessage("NO CONNECTION")
+            
         }
         document.addEventListener("keydown", handleKeydown)
         setBoard(drawBoard())
@@ -88,14 +91,13 @@ const game = () => {
     return (
         <div>
             <h1>Game</h1>
-            <h1>{serverMessage}</h1>
-            <h1>Input: {userInput}</h1>
             <button onClick={startGame}>Start Game</button>
             {board.map((d, i) => (
                 <div className="flex" key={i} ref={(ref) => (boardRef.current[i] = ref)}>
                     {d}
                 </div>
             ))}
+            {gameOver && <GameOver />}
         </div>
     )
 }

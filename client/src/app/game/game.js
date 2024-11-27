@@ -44,6 +44,7 @@ class Player {
         this.lastY = yPos
         this.sprite = sprite
         this.trail = this.createTrail()
+        this.collided = false
     }
 
     createTrail() {
@@ -74,6 +75,14 @@ class Player {
         }
     }
 
+    setCollided(status) {
+        this.collided = status
+    }
+    setPos(x, y) {
+        this.xPos = x
+        this.yPos = y
+    }
+
     getXPos() {
         return this.xPos
     }
@@ -88,6 +97,9 @@ class Player {
     }
     getTrailLength() {
         return this.trailLength
+    }
+    getCollided() {
+        return this.collided
     }
 
     moveUp() {
@@ -147,19 +159,19 @@ const updateBoard = (pA, pB) => {
         if(pA.getXPos() === pA.trail[i].getXPos()           // Player A hits themself
             && pA.getYPos() === pA.trail[i].getYPos() 
             && pA.trailLength > 1) {
-            gameOver()
+            pA.setCollided(true)
         } else if(pA.getXPos() === pB.trail[i].getXPos()    // Player A hits Player B's taile
             && pA.getYPos() === pB.trail[i].getYPos() 
             && pA.trailLength > 1) {
-            gameOver()
+            pA.setCollided(true)
         } else if(pB.getXPos() === pB.trail[i].getXPos()    // Player B hits themself
             && pB.getYPos() === pB.trail[i].getYPos() 
             && pB.trailLength > 1) {
-            gameOver()
+            pB.setCollided(true)
         } else if(pB.getXPos() === pA.trail[i].getXPos()    // Player B hits Player A's trail
             && pB.getYPos() === pA.trail[i].getYPos() 
             && pB.trailLength > 1) {
-            gameOver()
+            pB.setCollided(true)
         }
     }
 
@@ -180,14 +192,10 @@ const movePlayer = (player, direction) => {
         } else if (direction === "RIGHT" && player.getXPos() < process.env.BOARD_WIDTH - 1) {
             player.moveRight()
         } else {
-            gameOver()
+            player.setCollided(true)
         }
     }
     return player
-}
-
-const gameOver = () => {
-    alert("Game Over")
 }
 
 export { 

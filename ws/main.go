@@ -47,9 +47,11 @@ func playGame(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Player A Connected")
 		playerA = c
 		return // Only continue if two players are connected
-	} else {
+	} else if playerB == nil {
 		fmt.Println("Player B Connected")
 		playerB = c
+	} else {
+		return // Return if two players are already connected
 	}
 	defer playerA.Close()
 	defer playerB.Close()
