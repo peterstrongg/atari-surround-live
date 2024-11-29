@@ -12,18 +12,10 @@ class TrailNode {
         this.lastY = yPos
     }
 
-    getXPos() {
-        return this.xPos
-    }
-    getYPos() {
-        return this.yPos
-    }
-    getLastX() {
-        return this.lastX
-    }
-    getLastY() {
-        return this.lastY
-    }
+    getXPos() { return this.xPos }
+    getYPos() { return this.yPos }
+    getLastX() { return this.lastX }
+    getLastY() { return this.lastY }
 
     setXPos(x) {
         this.lastX = this.xPos
@@ -36,15 +28,31 @@ class TrailNode {
 }
 
 class Player {
-    trailLength = 1
     constructor(xPos, yPos, sprite) {
         this.xPos = xPos
         this.yPos = yPos
         this.lastX = xPos
         this.lastY = yPos
         this.sprite = sprite
-        this.trail = this.createTrail()
         this.collided = false
+        this.trailLength = 1
+        this.trail = this.createTrail()
+    }
+
+    movePlayer(direction) {
+        if (direction) {
+            if (direction === "UP" && this.getYPos() > 0) {
+                this.moveUp()
+            } else if (direction === "DOWN" && this.getYPos() < process.env.BOARD_HEIGHT - 1) {
+                this.moveDown()
+            } else if (direction === "LEFT" && this.getXPos() > 0) {
+                this.moveLeft()
+            } else if (direction === "RIGHT" && this.getXPos() < process.env.BOARD_WIDTH - 1) {
+                this.moveRight()
+            } else {
+                this.setCollided(true)
+            }
+        }
     }
 
     createTrail() {
@@ -75,31 +83,19 @@ class Player {
         }
     }
 
+    getXPos() { return this.xPos }
+    getYPos() { return this.yPos }
+    getLastX() { return this.lastX }
+    getLastY() { return this.lastY }
+    getTrailLength() { return this.trailLength }
+    getCollided() { return this.collided }
+    
     setCollided(status) {
         this.collided = status
     }
     setPos(x, y) {
         this.xPos = x
         this.yPos = y
-    }
-
-    getXPos() {
-        return this.xPos
-    }
-    getYPos() {
-        return this.yPos
-    }
-    getLastX() {
-        return this.lastX
-    }
-    getLastY() {
-        return this.lastY
-    }
-    getTrailLength() {
-        return this.trailLength
-    }
-    getCollided() {
-        return this.collided
     }
 
     moveUp() {

@@ -5,11 +5,13 @@ import { Player, playerASprite, playerBSprite, drawBoard, updateBoard, movePlaye
 import GameOver from "./components/gameover.js"
 
 const game = () => {
-    let pA = new Player(7, 11, playerASprite)
-    let pB = new Player(17, 11, playerBSprite)
+    let pA = new Player(process.env.PA_START_X, process.env.PA_START_Y, playerASprite)
+    let pB = new Player(process.env.PB_START_X, process.env.PB_START_Y, playerBSprite)
 
     const [board, setBoard] = useState([])
     const [gameOver, setGameOver] = useState(false)
+    const [playerAScore, setPlayerAScore] = useState(0)
+    const [playerBScore, setPlayerBScore] = useState(0)
     
     const webSocketRef = useRef(null)
     const userInputRef = useRef("DOWN") // Player moves down by default
@@ -45,26 +47,34 @@ const game = () => {
     const startGame = async (event) => {
         if(!pA.getCollided() && !pB.getCollided()) {
             const serverMessage = JSON.parse(event.data)
-            
-            pA = movePlayer(pA, serverMessage["playerAInput"])
-            pB = movePlayer(pB, serverMessage["playerBInput"])
+            pA.movePlayer(serverMessage["playerAInput"])
+            pB.movePlayer(serverMessage["playerBInput"])
             setBoard(updateBoard(pA, pB))
-            
         } else {
             setGameOver(true)
+            setScore()
             restartGame()
         }
     }
 
-    const restartGame = async () => {
-        await new Promise(r => setTimeout(r, 1000))
+    const setScore = () => {
+        if(pA.getCollided() && !pB.getCollided()) {             // Player B Wins
+            setPlayerBScore(playerBScore => playerBScore + 1)
+        } else if(!pA.getCollided() && pB.getCollided()) {      // Player A Wins
+            setPlayerAScore(playerAScore => playerAScore + 1)
+        } else if (pA.getCollided() && pB.getCollided()) {      // Tie
+            // TODO
+        }
+    }
+
+    const restartGame = () => {
+        setBoard(drawBoard())
         setGameOver(false)
-        pA = new Player(7, 11, playerASprite)
-        pB = new Player(17, 11, playerBSprite)
+        pA = new Player(process.env.PA_START_X, process.env.PA_START_Y, playerASprite)
+        pB = new Player(process.env.PB_START_X, process.env.PB_START_Y, playerBSprite)
         webSocketRef.current.send(JSON.stringify({
             "userInput" : "DOWN"
         }))
-        
     }
 
     useEffect(() => {
@@ -91,7 +101,8 @@ const game = () => {
     return (
         <div>
             <h1>Game</h1>
-            <button onClick={startGame}>Start Game</button>
+            <h1>Player A: {playerAScore}</h1>
+            <h1>Player B: {playerBScore}</h1>
             {board.map((d, i) => (
                 <div className="flex" key={i} ref={(ref) => (boardRef.current[i] = ref)}>
                     {d}
