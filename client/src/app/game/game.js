@@ -37,6 +37,8 @@ class Player {
         this.collided = false
         this.trailLength = 1
         this.trail = this.createTrail()
+        this.won = false
+        this.score = 0
     }
 
     movePlayer(direction) {
@@ -89,6 +91,8 @@ class Player {
     getLastY() { return this.lastY }
     getTrailLength() { return this.trailLength }
     getCollided() { return this.collided }
+    getWon() { return this.won }
+    getScore() { return this.score }
     
     setCollided(status) {
         this.collided = status
@@ -96,6 +100,12 @@ class Player {
     setPos(x, y) {
         this.xPos = x
         this.yPos = y
+    }
+    setWon(value) {
+        this.won = value
+    }
+    incScore() {
+        this.score++
     }
 
     moveUp() {
@@ -156,7 +166,7 @@ const updateBoard = (pA, pB) => {
             && pA.getYPos() === pA.trail[i].getYPos() 
             && pA.trailLength > 1) {
             pA.setCollided(true)
-        } else if(pA.getXPos() === pB.trail[i].getXPos()    // Player A hits Player B's taile
+        } else if(pA.getXPos() === pB.trail[i].getXPos()    // Player A hits Player B's tail
             && pA.getYPos() === pB.trail[i].getYPos() 
             && pA.trailLength > 1) {
             pA.setCollided(true)
