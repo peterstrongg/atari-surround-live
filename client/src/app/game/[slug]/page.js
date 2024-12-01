@@ -1,12 +1,21 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react"
+import { redirect } from 'next/navigation';
+import { useRouter } from "next/router";
+import { usePathname } from 'next/navigation';
 import { Player, playerASprite, playerBSprite, drawBoard, updateBoard, movePlayer } from "./game.js"
 import GameOver from "./components/gameover.js"
 
-const game = () => {
+const getSessionId = (path) => {
+    return path.split("/")[2]
+}
+
+const game = ({params}) => {
     let pA = new Player(process.env.PA_START_X, process.env.PA_START_Y, playerASprite)
     let pB = new Player(process.env.PB_START_X, process.env.PB_START_Y, playerBSprite)
+
+    const pathname = usePathname()
 
     const [board, setBoard] = useState([])
     const [gameOver, setGameOver] = useState(false)
@@ -87,10 +96,11 @@ const game = () => {
     const exit = () => {
         sendMessage("DISCONNECTED")
         webSocketRef.current.close()
+        redirect("/")
     }
 
     useEffect(() => {
-        const ws = new WebSocket(process.env.WS_SERVER_URL + "/ws/play")
+        const ws = new WebSocket(process.env.WS_SERVER_URL + "/ws/play/" + getSessionId(pathname))
         webSocketRef.current = ws
         ws.onopen = (event) => {
             ws.send(JSON.stringify({

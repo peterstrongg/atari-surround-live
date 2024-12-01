@@ -3,15 +3,12 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gorilla/websocket"
 )
-
-var playerA *websocket.Conn
-var playerB *websocket.Conn
 
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
@@ -31,8 +28,16 @@ type serverMessage struct {
 	PlayerBInput string `json:"playerBInput"`
 }
 
+type gameSession struct {
+	SessionId string
+	PlayerA   *websocket.Conn
+	PlayerB   *websocket.Conn
+}
+
+var gameSessions []gameSession
+
 func main() {
-	http.HandleFunc("/ws/play", playGame)
+	http.HandleFunc("/ws/play/", playGame)
 	err := http.ListenAndServe(":8081", nil)
 	if err != nil {
 		panic(err)
@@ -42,28 +47,35 @@ func main() {
 func playGame(w http.ResponseWriter, r *http.Request) {
 	c, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Print(err)
+		panic(err)
 	}
-	if playerA == nil {
-		fmt.Println("Player A Connected")
-		playerA = c
-		return // Only continue if two players are connected
-	} else if playerB == nil {
-		fmt.Println("Player B Connected")
-		playerB = c
-	} else {
-		return // Return if two players are already connected
-	}
-	defer playerA.Close()
-	defer playerB.Close()
 
-	fmt.Println("Starting Game...")
+	sessionId := getSessionId(r.URL.Path)
+	s := findGameSession(sessionId)
+	gameLoop(s, c)
+}
+
+func gameLoop(s *gameSession, c *websocket.Conn) {
+	if s.PlayerA == nil {
+		s.PlayerA = c
+		fmt.Println("Player A Connected...")
+		return
+	} else if s.PlayerB == nil {
+		s.PlayerB = c
+		fmt.Println("Player B Connected...")
+	} else {
+		return
+	}
+	defer s.PlayerA.Close()
+	defer s.PlayerB.Close()
+
+	fmt.Println("Game Starting...")
 
 	var inputA string
 	var inputB string
 
-	go getPlayerInput(playerA, &inputA)
-	go getPlayerInput(playerB, &inputB)
+	go getPlayerInput(s.PlayerA, &inputA)
+	go getPlayerInput(s.PlayerB, &inputB)
 
 	var responseA clientMessage
 	var responseB clientMessage
@@ -85,11 +97,36 @@ func playGame(w http.ResponseWriter, r *http.Request) {
 
 			message, _ := json.Marshal(m)
 
-			playerA.WriteMessage(websocket.TextMessage, []byte(string(message)))
-			playerB.WriteMessage(websocket.TextMessage, []byte(string(message)))
+			s.PlayerA.WriteMessage(websocket.TextMessage, []byte(string(message)))
+			s.PlayerB.WriteMessage(websocket.TextMessage, []byte(string(message)))
+
+			if m.Type == "DISCONNECT" {
+				fmt.Println("DISCONNECTED")
+				break
+			}
 		}
 		time.Sleep(100 * time.Millisecond)
 	}
+}
+
+func getSessionId(path string) string {
+	return strings.Split(path, "/")[3]
+}
+
+func findGameSession(id string) *gameSession {
+	for i := 0; i < len(gameSessions); i++ {
+		if gameSessions[i].SessionId == id {
+			return &gameSessions[i]
+		}
+	}
+	var gs gameSession
+	gs.SessionId = id
+	gameSessions = append(gameSessions, gs)
+	return &gameSessions[len(gameSessions)-1]
+}
+
+func deleteGameSession(id string) {
+
 }
 
 func getPlayerInput(c *websocket.Conn, value *string) {
