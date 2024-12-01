@@ -73,7 +73,6 @@ func playGame(w http.ResponseWriter, r *http.Request) {
 			json.Unmarshal([]byte(inputB), &responseB)
 
 			var m serverMessage
-			// m.Type = "GAME"
 			if responseA.UserInput == "REMATCH" || responseB.UserInput == "REMATCH" {
 				m.Type = "GAMEOVER"
 			} else {

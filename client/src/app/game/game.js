@@ -1,6 +1,6 @@
-const playerASprite = <div key="playerA" className="flex bg-green-500 w-[2rem] h-[2rem]"></div>
-const playerBSprite = <div key="playerB" className="flex bg-red-500 w-[2rem] h-[2rem]"></div>
-const playerTrailSprite = <div key="trailSprite" className="flex bg-blue-500 w-[2rem] h-[2rem]"></div>
+const playerASprite = <div key="playerA" className="flex bg-green-600 w-[2rem] h-[2rem]"></div>
+const playerBSprite = <div key="playerB" className="flex bg-sky-600 w-[2rem] h-[2rem]"></div>
+const playerTrailSprite = <div key="trailSprite" className="flex border border-stone-700 bg-stone-500 w-[2rem] h-[2rem]"></div>
 
 class TrailNode {
     sprite = playerTrailSprite
@@ -136,7 +136,7 @@ const drawBoard = () => {
     for (let row = 0; row < process.env.BOARD_HEIGHT; row++) {
         const r = []
         for (let col = 0; col < process.env.BOARD_WIDTH; col++) {
-            r.push(<div key={r} className="flex bg-white w-[2rem] h-[2rem] border"></div>)
+            r.push(<div key={r} className="flex bg-stone-800 w-[2rem] h-[2rem] border border-stone-700"></div>)
         }
         board.push(r)
     }
@@ -149,12 +149,12 @@ const updateBoard = (pA, pB) => {
     // Draw trails
     pA.updateTrail()
     for(let i = 0; i < pA.trailLength; i++) {
-        board[pA.trail[i].getYPos()][pA.trail[i].getXPos()] = <div key={i} className="flex bg-blue-300 w-[2rem] h-[2rem]"></div>
+        board[pA.trail[i].getYPos()][pA.trail[i].getXPos()] = <div key={i} className="flex bg-stone-500 w-[2rem] h-[2rem]"></div>
     }
 
     pB.updateTrail()
     for(let i = 0; i < pB.trailLength; i++) {
-        board[pB.trail[i].getYPos()][pB.trail[i].getXPos()] = <div key={-i-1} className="flex bg-blue-300 w-[2rem] h-[2rem]"></div>
+        board[pB.trail[i].getYPos()][pB.trail[i].getXPos()] = <div key={-i-1} className="flex bg-stone-500 w-[2rem] h-[2rem]"></div>
     }
 
     // Update player locations

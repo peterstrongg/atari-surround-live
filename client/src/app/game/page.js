@@ -13,8 +13,6 @@ const game = () => {
     const [playerAScore, setPlayerAScore] = useState(0)
     const [playerBScore, setPlayerBScore] = useState(0)
     const [winner, setWinner] = useState("")
-    const [playerARematch, setPlayerARematch] = useState(false)
-    const [playerBRematch, setPlayerBRematch] = useState(false)
     
     const webSocketRef = useRef(null)
     const userInputRef = useRef("DOWN") // Player moves down by default
@@ -87,6 +85,10 @@ const game = () => {
         sendMessage("DOWN")
     }
 
+    const exit = () => {
+        webSocketRef.current.close()
+    }
+
     useEffect(() => {
         const ws = new WebSocket(process.env.WS_SERVER_URL + "/ws/play")
         webSocketRef.current = ws
@@ -96,7 +98,6 @@ const game = () => {
             }))
         }
         ws.onmessage = (event) => {
-            console.log(event.data)
             const data = JSON.parse(event.data)
             if(data["type"] === "GAME") {
                 startGame(data)
@@ -113,7 +114,7 @@ const game = () => {
             } 
         }
         ws.onclose = (event) => {
-            
+            console.log("Connection terminated")
         }
         document.addEventListener("keydown", handleKeydown)
         setBoard(drawBoard())
@@ -136,7 +137,7 @@ const game = () => {
                     </div>
                 ))}
             </div>
-            {gameOver && <GameOver winner={winner} requestRematch={requestRematch} />}
+            {gameOver && <GameOver winner={winner} requestRematch={requestRematch} exit={exit} />}
         </div>
     )
 }
