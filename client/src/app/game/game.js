@@ -3,13 +3,12 @@ const playerBSprite = <div key="playerB" className="flex bg-sky-600 w-[2rem] h-[
 const playerTrailSprite = <div key="trailSprite" className="flex border border-stone-700 bg-stone-500 w-[2rem] h-[2rem]"></div>
 
 class TrailNode {
-    sprite = playerTrailSprite
-
     constructor(xPos, yPos) {
         this.xPos = xPos
         this.yPos = yPos
         this.lastX = xPos
         this.lastY = yPos
+        this.sprite = playerTrailSprite
     }
 
     getXPos() { return this.xPos }

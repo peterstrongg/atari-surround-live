@@ -77,7 +77,6 @@ const game = () => {
         } else if(pB.getWon()) {
             setPlayerBScore(playerBScore => playerBScore + 1)
         }
-
         setBoard(drawBoard())
         setGameOver(false)
         pA = new Player(process.env.PA_START_X, process.env.PA_START_Y, playerASprite)
@@ -86,6 +85,7 @@ const game = () => {
     }
 
     const exit = () => {
+        sendMessage("DISCONNECTED")
         webSocketRef.current.close()
     }
 
@@ -108,6 +108,9 @@ const game = () => {
                 if (data["playerBInput"] === "REMATCH") {
                     pB.rematch = true
                 }              
+            } else if (data["type"] === "DISCONNECT") {
+                console.log("Opponent disconnected")
+                exit()
             }
             if (pA.rematch && pB.rematch) {
                 restartGame()

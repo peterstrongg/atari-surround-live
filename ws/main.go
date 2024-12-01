@@ -75,6 +75,8 @@ func playGame(w http.ResponseWriter, r *http.Request) {
 			var m serverMessage
 			if responseA.UserInput == "REMATCH" || responseB.UserInput == "REMATCH" {
 				m.Type = "GAMEOVER"
+			} else if responseA.UserInput == "DISCONNECTED" || responseB.UserInput == "DISCONNECTED" {
+				m.Type = "DISCONNECT"
 			} else {
 				m.Type = "GAME"
 			}
