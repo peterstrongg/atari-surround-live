@@ -26,6 +26,7 @@ type clientMessage struct {
 }
 
 type serverMessage struct {
+	Type         string `json:"type"`
 	PlayerAInput string `json:"playerAInput"`
 	PlayerBInput string `json:"playerBInput"`
 }
@@ -72,6 +73,14 @@ func playGame(w http.ResponseWriter, r *http.Request) {
 			json.Unmarshal([]byte(inputB), &responseB)
 
 			var m serverMessage
+			if responseA.UserInput == "REMATCH" {
+				m.Type = "GAMEOVER"
+			}
+			if responseB.UserInput == "REMATCH" {
+				m.Type = "GAMEOVER"
+			} else {
+				m.Type = "GAME"
+			}
 			m.PlayerAInput = responseA.UserInput
 			m.PlayerBInput = responseB.UserInput
 

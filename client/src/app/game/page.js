@@ -13,47 +13,44 @@ const game = () => {
     const [playerAScore, setPlayerAScore] = useState(0)
     const [playerBScore, setPlayerBScore] = useState(0)
     const [winner, setWinner] = useState("")
+    const [playerARematch, setPlayerARematch] = useState(false)
+    const [playerBRematch, setPlayerBRematch] = useState(false)
     
     const webSocketRef = useRef(null)
     const userInputRef = useRef("DOWN") // Player moves down by default
     const boardRef = useRef([])
 
+
+    const sendMessage = (message) => {
+        webSocketRef.current.send(JSON.stringify({
+            "userInput" : message
+        }))
+        userInputRef.current = message
+    }
+
     const handleKeydown = (event) => {
         if(event.key.toUpperCase() === "W" || event.key === "ArrowUp") {
-            webSocketRef.current.send(JSON.stringify({
-                "userInput" : "UP"
-            }))
-            userInputRef.current = "UP"
+            sendMessage("UP")
         }
         if(event.key.toUpperCase() === "A" || event.key === "ArrowLeft") {
-            webSocketRef.current.send(JSON.stringify({
-                "userInput" : "LEFT"
-            }))
-            userInputRef.current = "LEFT"
+            sendMessage("LEFT")
         }
         if(event.key.toUpperCase() === "S" || event.key === "ArrowDown") {
-            webSocketRef.current.send(JSON.stringify({
-                "userInput" : "DOWN"
-            }))
-            userInputRef.current = "DOWN"
+            sendMessage("DOWN")
         }
         if(event.key.toUpperCase() === "D" || event.key === "ArrowRight") {
-            webSocketRef.current.send(JSON.stringify({
-                "userInput" : "RIGHT"
-            }))
-            userInputRef.current = "RIGHT"
+            sendMessage("RIGHT")
         }
     }
 
-    const startGame = (event) => {
+    const startGame = (data) => {
         if(!pA.getCollided() && !pB.getCollided()) {
-            const serverMessage = JSON.parse(event.data)
-            pA.movePlayer(serverMessage["playerAInput"])
-            pB.movePlayer(serverMessage["playerBInput"])
+            pA.movePlayer(data["playerAInput"])
+            pB.movePlayer(data["playerBInput"])
             setBoard(updateBoard(pA, pB))
         } else {
             setGameOver(true)
-            const winner = determineWinner()
+            determineWinner()
             // restartGame()
         }
     }
@@ -72,9 +69,11 @@ const game = () => {
         }
     }
 
+    const requestRematch = () => {
+        sendMessage("REMATCH")
+    }
+
     const restartGame = () => {
-        // Update scoreboard UI
-        setPlayerAScore(playerAScore => playerAScore + 1)
         if(pA.getWon()) {
             setPlayerAScore(playerAScore => playerAScore + 1)
         } else if(pB.getWon()) {
@@ -85,9 +84,7 @@ const game = () => {
         setGameOver(false)
         pA = new Player(process.env.PA_START_X, process.env.PA_START_Y, playerASprite)
         pB = new Player(process.env.PB_START_X, process.env.PB_START_Y, playerBSprite)
-        webSocketRef.current.send(JSON.stringify({
-            "userInput" : "DOWN"
-        }))
+        sendMessage("DOWN")
     }
 
     useEffect(() => {
@@ -99,7 +96,20 @@ const game = () => {
             }))
         }
         ws.onmessage = (event) => {
-            startGame(event)
+            const data = JSON.parse(event.data)
+            if(data["type"] === "GAME") {
+                startGame(data)
+            } else if (data["type"] === "GAMEOVER") {
+                if (data["playerAInput"] === "REMATCH") {
+                    pA.rematch = true
+                } 
+                if (data["playerBInput"] === "REMATCH") {
+                    pB.rematch = true
+                }              
+            }
+            if (pA.rematch && pB.rematch) {
+                restartGame()
+            } 
         }
         ws.onclose = (event) => {
             
@@ -125,7 +135,7 @@ const game = () => {
                     </div>
                 ))}
             </div>
-            {gameOver && <GameOver winner={winner} restartGame={restartGame} />}
+            {gameOver && <GameOver winner={winner} requestRematch={requestRematch} />}
         </div>
     )
 }

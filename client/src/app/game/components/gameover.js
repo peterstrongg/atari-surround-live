@@ -5,7 +5,7 @@ const GameOver = (props) => {
                 <h1>Game Over</h1>
                 <h1>{props.winner} won!</h1>
                 <div>
-                    <button onClick={props.restartGame} className="mr-4 ml-4">Rematch</button>
+                    <button onClick={props.requestRematch} className="mr-4 ml-4">Rematch</button>
                     <button className="mr-4 ml-4">Exit</button>
                 </div>
             </div>

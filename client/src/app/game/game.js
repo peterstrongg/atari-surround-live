@@ -39,6 +39,7 @@ class Player {
         this.trail = this.createTrail()
         this.won = false
         this.score = 0
+        this.rematch = false
     }
 
     movePlayer(direction) {
