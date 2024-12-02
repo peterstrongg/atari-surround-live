@@ -101,6 +101,9 @@ func gameLoop(s *gameSession, c *websocket.Conn) {
 			s.PlayerB.WriteMessage(websocket.TextMessage, []byte(string(message)))
 
 			if m.Type == "DISCONNECT" {
+				s.PlayerA.Close()
+				s.PlayerB.Close()
+				deleteGameSession(s.SessionId)
 				fmt.Println("DISCONNECTED")
 				break
 			}
@@ -126,7 +129,12 @@ func findGameSession(id string) *gameSession {
 }
 
 func deleteGameSession(id string) {
-
+	for i := 0; i < len(gameSessions); i++ {
+		if gameSessions[i].SessionId == id {
+			gameSessions = append(gameSessions[:i], gameSessions[i+1:]...)
+			return
+		}
+	}
 }
 
 func getPlayerInput(c *websocket.Conn, value *string) {
