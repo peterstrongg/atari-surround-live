@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -29,47 +28,45 @@ type serverMessage struct {
 	PlayerBInput string `json:"playerBInput"`
 }
 
-type gameSession struct {
-	SessionId string
-	PlayerA   *websocket.Conn
-	PlayerB   *websocket.Conn
-}
+// type gameSession struct {
+// 	SessionId string
+// 	PlayerA   *websocket.Conn
+// 	PlayerB   *websocket.Conn
+// }
 
-var gameSessions []gameSession
+// type SessionsContainer struct {
+// 	mu           sync.Mutex
+// 	gameSessions []gameSession
+// }
 
-type SessionContainer struct {
-	mu           sync.Mutex
-	gameSessions []gameSession
-}
+// var sc SessionsContainer
 
-var sc SessionContainer
+// func (sc *SessionsContainer) findGameSession(id string) *gameSession {
+// 	sc.mu.Lock()
+// 	defer sc.mu.Unlock()
 
-func (sc *SessionContainer) findGameSession(id string) *gameSession {
-	sc.mu.Lock()
-	defer sc.mu.Unlock()
+// 	for i := 0; i < len(sc.gameSessions); i++ {
+// 		if sc.gameSessions[i].SessionId == id {
+// 			return &sc.gameSessions[i]
+// 		}
+// 	}
+// 	var gs gameSession
+// 	gs.SessionId = id
+// 	sc.gameSessions = append(sc.gameSessions, gs)
+// 	return &sc.gameSessions[len(sc.gameSessions)-1]
+// }
 
-	for i := 0; i < len(sc.gameSessions); i++ {
-		if sc.gameSessions[i].SessionId == id {
-			return &sc.gameSessions[i]
-		}
-	}
-	var gs gameSession
-	gs.SessionId = id
-	sc.gameSessions = append(sc.gameSessions, gs)
-	return &sc.gameSessions[len(sc.gameSessions)-1]
-}
+// func (sc *SessionsContainer) deleteGameSession(id string) {
+// 	sc.mu.Lock()
+// 	defer sc.mu.Unlock()
 
-func (sc *SessionContainer) deleteGameSession(id string) {
-	sc.mu.Lock()
-	defer sc.mu.Unlock()
-
-	for i := 0; i < len(sc.gameSessions); i++ {
-		if sc.gameSessions[i].SessionId == id {
-			sc.gameSessions = append(sc.gameSessions[:i], sc.gameSessions[i+1:]...)
-			return
-		}
-	}
-}
+// 	for i := 0; i < len(sc.gameSessions); i++ {
+// 		if sc.gameSessions[i].SessionId == id {
+// 			sc.gameSessions = append(sc.gameSessions[:i], sc.gameSessions[i+1:]...)
+// 			return
+// 		}
+// 	}
+// }
 
 func main() {
 	http.HandleFunc("/ws/play/", playGame)
@@ -149,27 +146,6 @@ func gameLoop(s *gameSession, c *websocket.Conn) {
 
 func getSessionId(path string) string {
 	return strings.Split(path, "/")[3]
-}
-
-func findGameSession(id string) *gameSession {
-	for i := 0; i < len(gameSessions); i++ {
-		if gameSessions[i].SessionId == id {
-			return &gameSessions[i]
-		}
-	}
-	var gs gameSession
-	gs.SessionId = id
-	gameSessions = append(gameSessions, gs)
-	return &gameSessions[len(gameSessions)-1]
-}
-
-func deleteGameSession(id string) {
-	for i := 0; i < len(gameSessions); i++ {
-		if gameSessions[i].SessionId == id {
-			gameSessions = append(gameSessions[:i], gameSessions[i+1:]...)
-			return
-		}
-	}
 }
 
 func getPlayerInput(c *websocket.Conn, value *string) {
