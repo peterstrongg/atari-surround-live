@@ -24,7 +24,7 @@ const game = ({params}) => {
     const [winner, setWinner] = useState("")
     
     const webSocketRef = useRef(null)
-    const userInputRef = useRef("DOWN") // Player moves down by default
+    const userInputRef = useRef("DOWN")
     const boardRef = useRef([])
 
 
@@ -58,7 +58,6 @@ const game = ({params}) => {
         } else {
             setGameOver(true)
             determineWinner()
-            // restartGame()
         }
     }
 
@@ -95,7 +94,6 @@ const game = ({params}) => {
 
     const exit = () => {
         sendMessage("DISCONNECTED")
-        webSocketRef.current.close()
         redirect("/")
     }
 
@@ -119,15 +117,14 @@ const game = ({params}) => {
                     pB.rematch = true
                 }              
             } else if (data["type"] === "DISCONNECT") {
-                console.log("Opponent disconnected")
-                exit()
+                ws.close()
             }
             if (pA.rematch && pB.rematch) {
                 restartGame()
             } 
         }
-        ws.onclose = (event) => {
-            console.log("Connection terminated")
+        ws.onclose = (_) => {
+            exit()
         }
         document.addEventListener("keydown", handleKeydown)
         setBoard(drawBoard())
