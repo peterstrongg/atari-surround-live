@@ -1,5 +1,5 @@
-const playerASprite = <div key="playerA" className="flex bg-green-600 w-[2rem] h-[2rem]"></div>
-const playerBSprite = <div key="playerB" className="flex bg-sky-600 w-[2rem] h-[2rem]"></div>
+const playerASprite = <div key="playerA" className="flex bg-gradient-to-br from-green-600 to-green-400 w-[2rem] h-[2rem]"></div>
+const playerBSprite = <div key="playerB" className="flex bg-gradient-to-br from-sky-600 to-sky-400 w-[2rem] h-[2rem]"></div>
 const playerTrailSprite = <div key="trailSprite" className="flex border border-stone-700 bg-stone-500 w-[2rem] h-[2rem]"></div>
 
 class TrailNode {
