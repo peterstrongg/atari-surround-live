@@ -118,6 +118,8 @@ const game = ({params}) => {
                 }              
             } else if (data["type"] === "DISCONNECT") {
                 ws.close()
+            } else if (data["type"] === "CONNECT") {
+                console.log(event.data)
             }
             if (pA.rematch && pB.rematch) {
                 restartGame()

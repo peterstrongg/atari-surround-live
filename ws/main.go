@@ -50,10 +50,12 @@ func playGame(w http.ResponseWriter, r *http.Request) {
 func gameLoop(s *gameSession, c *websocket.Conn) {
 	if s.PlayerA == nil {
 		s.PlayerA = c
+		sendPlayerAssignment(c, "PLAYER_A")
 		fmt.Println("Player A Connected...")
 		return
 	} else if s.PlayerB == nil {
 		s.PlayerB = c
+		sendPlayerAssignment(c, "PLAYER_B")
 		fmt.Println("Player B Connected...")
 	} else {
 		return
@@ -76,17 +78,7 @@ func gameLoop(s *gameSession, c *websocket.Conn) {
 			json.Unmarshal([]byte(inputA), &responseA)
 			json.Unmarshal([]byte(inputB), &responseB)
 
-			var m serverMessage
-			if responseA.UserInput == "REMATCH" || responseB.UserInput == "REMATCH" {
-				m.Type = "GAMEOVER"
-			} else if responseA.UserInput == "DISCONNECTED" || responseB.UserInput == "DISCONNECTED" {
-				m.Type = "DISCONNECT"
-			} else {
-				m.Type = "GAME"
-			}
-			m.PlayerAInput = responseA.UserInput
-			m.PlayerBInput = responseB.UserInput
-
+			m := constructServerMessage(responseA.UserInput, responseB.UserInput)
 			message, _ := json.Marshal(m)
 
 			s.PlayerA.WriteMessage(websocket.TextMessage, []byte(string(message)))
@@ -116,4 +108,28 @@ func getPlayerInput(c *websocket.Conn, value *string) {
 		}
 		*value = string(message)
 	}
+}
+
+func constructServerMessage(inputA string, inputB string) serverMessage {
+	var m serverMessage
+	if inputA == "REMATCH" || inputB == "REMATCH" {
+		m.Type = "GAMEOVER"
+	} else if inputA == "DISCONNECTED" || inputB == "DISCONNECTED" {
+		m.Type = "DISCONNECT"
+	} else {
+		m.Type = "GAME"
+	}
+	m.PlayerAInput = inputA
+	m.PlayerBInput = inputB
+
+	return m
+}
+
+func sendPlayerAssignment(c *websocket.Conn, data string) {
+	var sm serverMessage
+	sm.Type = "CONNECT"
+	sm.PlayerAInput = data
+	sm.PlayerBInput = data
+	message, _ := json.Marshal(sm)
+	c.WriteMessage(websocket.TextMessage, []byte(message))
 }
